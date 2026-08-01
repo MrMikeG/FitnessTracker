@@ -69,7 +69,10 @@ export default function Home() {
   useEffect(() => {
     void (async () => {
       try {
-        const restored = await supabase.restoreSession()
+        const restored = await Promise.race([
+          supabase.restoreSession(),
+          new Promise<null>(resolve => window.setTimeout(() => resolve(null), 4000))
+        ])
         setSession(restored)
         if (restored) {
           const cloudProgress = await supabase.getProgress(restored.user.id, restored.accessToken) as Partial<SavedProgress> | null
