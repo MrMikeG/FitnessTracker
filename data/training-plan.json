@@ -1,0 +1,118 @@
+{
+  "planName": "Strength + Half Marathon Base",
+  "week": 5,
+  "totalWeeks": 12,
+  "phase": "Build the aerobic base",
+  "weeklyGoal": 6,
+  "completedThisWeek": 2,
+  "weekSettings": {
+    "easyRun": ["20–30 min", "20–30 min", "20–30 min", "20–30 min", "30–35 min", "30–35 min", "30–35 min", "30–35 min", "35–45 min", "35–45 min", "35–45 min", "35–45 min"],
+    "speedRun": ["Run 1 min / walk 2 min · 8–10 rounds", "Run 1 min / walk 2 min · 8–10 rounds", "Run 1 min / walk 2 min · 8–10 rounds", "Run 1 min / walk 2 min · 8–10 rounds", "Run 3 min / walk 1 min · repeat", "Run 3 min / walk 1 min · repeat", "Run 3 min / walk 1 min · repeat", "Run 3 min / walk 1 min · repeat", "6 × 400 m fast · easy recovery", "6 × 400 m fast · easy recovery", "6 × 400 m fast · easy recovery", "6 × 400 m fast · easy recovery"],
+    "longRunMiles": [2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 8]
+  },
+  "schedule": {
+    "monday": {
+      "day": "Monday",
+      "focus": "Upper Body + Easy Run",
+      "duration": 70,
+      "calories": 510,
+      "equipment": ["Barbell", "Cable machine", "Treadmill"],
+      "coachNote": "Keep the run conversational. You should finish the lifting work with 1–2 reps in reserve.",
+      "exercises": [
+        { "id": "bench-press", "name": "Bench Press", "detail": "3 sets × 8–10 reps", "load": "Working weight", "rest": "90 sec" },
+        { "id": "lat-pulldown", "name": "Lat Pulldown", "detail": "3 sets × 10 reps", "load": "Controlled", "rest": "75 sec" },
+        { "id": "db-shoulder", "name": "Dumbbell Shoulder Press", "detail": "3 sets × 10 reps", "load": "Working weight", "rest": "75 sec" },
+        { "id": "cable-row", "name": "Seated Cable Row", "detail": "3 sets × 10 reps", "load": "Controlled", "rest": "75 sec" },
+        { "id": "incline-db", "name": "Incline Dumbbell Press", "detail": "3 sets × 10 reps", "load": "Working weight", "rest": "75 sec" },
+        { "id": "plank", "name": "Plank", "detail": "3 sets × 45 sec", "load": "Bodyweight", "rest": "45 sec" }
+      ]
+    },
+    "tuesday": {
+      "day": "Tuesday",
+      "focus": "Lower Body",
+      "duration": 65,
+      "calories": 470,
+      "equipment": ["Barbell", "Machines", "Bike"],
+      "coachNote": "Finish with 10–15 minutes on the bike or an incline treadmill at an easy effort.",
+      "exercises": [
+        { "id": "squat", "name": "Barbell Squat", "detail": "3 sets × 8 reps", "load": "Working weight", "rest": "120 sec" },
+        { "id": "rdl", "name": "Romanian Deadlift", "detail": "3 sets × 10 reps", "load": "Working weight", "rest": "90 sec" },
+        { "id": "lunges", "name": "Walking Lunges", "detail": "3 sets × 12 each leg", "load": "Dumbbells optional", "rest": "75 sec" },
+        { "id": "leg-curl", "name": "Leg Curl", "detail": "3 sets × 12 reps", "load": "Controlled", "rest": "60 sec" },
+        { "id": "calf-raise", "name": "Calf Raises", "detail": "4 sets × 15 reps", "load": "Controlled", "rest": "45 sec" },
+        { "id": "knee-raises", "name": "Hanging Knee Raises", "detail": "3 sets × 12 reps", "load": "Bodyweight", "rest": "45 sec" }
+      ]
+    },
+    "wednesday": {
+      "day": "Wednesday",
+      "focus": "Speed Run + Mobility",
+      "duration": 50,
+      "calories": 390,
+      "equipment": ["Running shoes", "Foam roller"],
+      "coachNote": "Warm up with a 5-minute walk and dynamic mobility. Stretch and foam roll after the session.",
+      "exercises": [
+        { "id": "walk-warmup", "name": "Walk Warm-up", "detail": "5 minutes", "load": "Easy pace", "rest": "—" },
+        { "id": "dynamic", "name": "Dynamic Stretches", "detail": "Leg swings, lunges, ankle circles", "load": "5–8 min", "rest": "—" },
+        { "id": "speed-session", "name": "Speed Session", "detail": "Week-specific intervals", "load": "See run card", "rest": "Easy recovery" },
+        { "id": "foam-roll", "name": "Stretch + Foam Roll", "detail": "8–10 minutes", "load": "Recovery", "rest": "—" }
+      ]
+    },
+    "thursday": {
+      "day": "Thursday",
+      "focus": "Upper Body",
+      "duration": 60,
+      "calories": 420,
+      "equipment": ["Dumbbells", "Cable machine", "Bench"],
+      "coachNote": "Optional: add 20 minutes on the StairMaster only if your legs feel fresh for Saturday.",
+      "exercises": [
+        { "id": "incline-bench", "name": "Incline Bench Press", "detail": "3 sets × 8 reps", "load": "Working weight", "rest": "90 sec" },
+        { "id": "pullups", "name": "Pull-ups or Assisted Pull-ups", "detail": "3 sets", "load": "Quality reps", "rest": "90 sec" },
+        { "id": "db-row", "name": "Dumbbell Row", "detail": "3 sets × 10 reps", "load": "Each side", "rest": "75 sec" },
+        { "id": "cable-fly", "name": "Cable Fly", "detail": "3 sets × 12 reps", "load": "Controlled", "rest": "60 sec" },
+        { "id": "laterals", "name": "Lateral Raises", "detail": "3 sets × 15 reps", "load": "Light + strict", "rest": "45 sec" },
+        { "id": "curl", "name": "Biceps Curl", "detail": "3 sets × 12 reps", "load": "Controlled", "rest": "60 sec" },
+        { "id": "pushdown", "name": "Triceps Pushdown", "detail": "3 sets × 12 reps", "load": "Controlled", "rest": "60 sec" }
+      ]
+    },
+    "friday": {
+      "day": "Friday",
+      "focus": "Lower Body + Core",
+      "duration": 65,
+      "calories": 500,
+      "equipment": ["Trap bar", "Leg press", "Bike"],
+      "coachNote": "Keep the cycling easy for 15–20 minutes. Save some energy for tomorrow’s long run.",
+      "exercises": [
+        { "id": "trap-deadlift", "name": "Trap Bar Deadlift", "detail": "3 sets × 6 reps", "load": "Working weight", "rest": "120 sec" },
+        { "id": "split-squat", "name": "Bulgarian Split Squats", "detail": "3 sets × 10 reps", "load": "Each leg", "rest": "75 sec" },
+        { "id": "leg-press", "name": "Leg Press", "detail": "3 sets × 12 reps", "load": "Controlled", "rest": "75 sec" },
+        { "id": "hip-thrust", "name": "Hip Thrust", "detail": "3 sets × 10 reps", "load": "Working weight", "rest": "75 sec" },
+        { "id": "wood-chops", "name": "Cable Wood Chops", "detail": "3 sets × 15 reps", "load": "Each side", "rest": "45 sec" },
+        { "id": "side-plank", "name": "Side Plank", "detail": "3 sets × 30 sec", "load": "Each side", "rest": "45 sec" }
+      ]
+    },
+    "saturday": {
+      "day": "Saturday",
+      "focus": "Long Run",
+      "duration": 55,
+      "calories": 520,
+      "equipment": ["Running shoes", "Water"],
+      "coachNote": "Go slowly. Finish feeling like you could have gone a little farther—not exhausted.",
+      "exercises": [
+        { "id": "long-run", "name": "Long Run", "detail": "Week-specific distance", "load": "Easy conversational pace", "rest": "—" },
+        { "id": "post-run", "name": "Post-run Stretch", "detail": "5–10 minutes", "load": "Recovery", "rest": "—" }
+      ]
+    },
+    "sunday": {
+      "day": "Sunday",
+      "focus": "Recovery Day",
+      "duration": 40,
+      "calories": 180,
+      "equipment": ["Walking shoes", "Foam roller"],
+      "coachNote": "No hard workouts today. Walk, stretch, foam roll, and prioritize 7–9 hours of sleep.",
+      "exercises": [
+        { "id": "recovery-walk", "name": "Easy Walk", "detail": "30–45 minutes", "load": "Easy pace", "rest": "—" },
+        { "id": "stretch", "name": "Stretch + Foam Roll", "detail": "10 minutes", "load": "Recovery", "rest": "—" }
+      ]
+    }
+  }
+}
