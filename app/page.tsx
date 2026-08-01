@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import plan from '@/data/training-plan.json'
-import { Check, ChevronLeft, ChevronRight, Dumbbell, Flame, LogOut, Mail, Moon, Play, Plus, Settings2, SkipForward, Sun, Timer, Trophy, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Dumbbell, Flame, Moon, Play, Plus, Settings2, SkipForward, Sun, Timer, Trophy, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { supabase, type AuthSession } from '@/lib/supabase-browser'
 
 type Exercise = (typeof plan.schedule)[keyof typeof plan.schedule]['exercises'][number]
 
@@ -40,11 +39,6 @@ export default function Home() {
   const [elapsed, setElapsed] = useState(0)
   const [dark, setDark] = useState(false)
   const [hydrated, setHydrated] = useState(false)
-  const [session, setSession] = useState<AuthSession | null>(null)
-  const [authLoading, setAuthLoading] = useState(true)
-  const [cloudReady, setCloudReady] = useState(false)
-  const [email, setEmail] = useState('')
-  const [authMessage, setAuthMessage] = useState('')
 
   const completed = completedByDay[workoutKey] ?? []
   const isSkipped = skippedDays.includes(workoutKey)
@@ -67,38 +61,10 @@ export default function Home() {
     setHydrated(true)
   }, [])
   useEffect(() => {
-    void (async () => {
-      try {
-        const restored = await Promise.race([
-          supabase.restoreSession(),
-          new Promise<null>(resolve => window.setTimeout(() => resolve(null), 4000))
-        ])
-        setSession(restored)
-        if (restored) {
-          const cloudProgress = await supabase.getProgress(restored.user.id, restored.accessToken) as Partial<SavedProgress> | null
-          if (cloudProgress) {
-            if (cloudProgress.completedByDay) setCompletedByDay(cloudProgress.completedByDay)
-            if (cloudProgress.skippedDays) setSkippedDays(cloudProgress.skippedDays)
-            if (cloudProgress.notesByWorkout) setNotesByWorkout(cloudProgress.notesByWorkout)
-            if (typeof cloudProgress.selectedDayIndex === 'number') setSelectedDayIndex(cloudProgress.selectedDayIndex)
-            if (typeof cloudProgress.selectedWeek === 'number') setSelectedWeek(cloudProgress.selectedWeek)
-            if (typeof cloudProgress.dark === 'boolean') setDark(cloudProgress.dark)
-          }
-          setCloudReady(true)
-        }
-      } catch {
-        setAuthMessage('We could not restore your session. Please sign in again.')
-      } finally { setAuthLoading(false) }
-    })
-  }, [])
-  useEffect(() => {
     if (!hydrated) return
     const progress: SavedProgress = { completedByDay, skippedDays, notesByWorkout, selectedDayIndex, selectedWeek, dark }
     window.localStorage.setItem(storageKey, JSON.stringify(progress))
-    if (!session || !cloudReady) return
-    const save = window.setTimeout(() => { void supabase.saveProgress(session.user.id, progress, session.accessToken).catch(() => setAuthMessage('Changes are saved on this device, but cloud sync is temporarily unavailable.')) }, 500)
-    return () => window.clearTimeout(save)
-  }, [cloudReady, completedByDay, dark, hydrated, notesByWorkout, selectedDayIndex, selectedWeek, session, skippedDays])
+  }, [completedByDay, dark, hydrated, notesByWorkout, selectedDayIndex, selectedWeek, skippedDays])
   useEffect(() => {
     if (!running) return
     const t = window.setInterval(() => setElapsed(s => s + 1), 1000)
@@ -116,28 +82,11 @@ export default function Home() {
   const toggleSkip = () => setSkippedDays(days => days.includes(workoutKey) ? days.filter(day => day !== workoutKey) : [...days, workoutKey])
   const changeWeek = (direction: number) => setSelectedWeek(week => Math.min(plan.totalWeeks, Math.max(1, week + direction)))
   const updateNotes = (note: string) => setNotesByWorkout(current => ({ ...current, [workoutKey]: note }))
-  const signIn = async (event: React.FormEvent) => {
-    event.preventDefault()
-    setAuthMessage('')
-    try {
-      await supabase.sendMagicLink(email, window.location.origin)
-      setAuthMessage('Check your email for a secure sign-in link.')
-    } catch (error) { setAuthMessage(error instanceof Error ? error.message : 'Unable to send sign-in email.') }
-  }
-  const signOut = async () => {
-    if (session) await supabase.signOut(session.accessToken).catch(() => undefined)
-    setSession(null)
-    setCloudReady(false)
-  }
-
-  if (authLoading) return <main className="grid min-h-screen place-items-center bg-[#f6f7f3] p-6 dark:bg-[#0c0e0c]"><p className="text-sm font-semibold muted">Loading Pulse Training…</p></main>
-  if (!session) return <main className="grid min-h-screen place-items-center bg-[#f6f7f3] p-5 dark:bg-[#0c0e0c]"><section className="glass w-full max-w-md rounded-4xl p-7 sm:p-9"><div className="grid h-14 w-14 place-items-center rounded-2xl bg-ink text-lime dark:bg-lime dark:text-ink"><Dumbbell size={26}/></div><p className="mt-7 text-xs font-bold tracking-[.16em] muted">PULSE TRAINING</p><h1 className="mt-2 text-3xl font-bold tracking-tight">Your plan, wherever you train.</h1><p className="mt-3 text-sm leading-6 muted">Sign in once and your workouts, notes, and progress will stay in sync across your devices.</p><form onSubmit={signIn} className="mt-7 space-y-3"><label className="text-sm font-semibold" htmlFor="email">Email address</label><div className="relative"><Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18}/><input id="email" type="email" required value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com" className="h-13 w-full rounded-2xl bg-zinc-100 py-3 pl-11 pr-4 text-sm outline-none ring-lime focus:ring-2 dark:bg-white/5"/></div><Button type="submit" className="w-full">Send me a sign-in link</Button></form>{authMessage && <p className="mt-4 text-sm font-medium text-emerald-700 dark:text-lime">{authMessage}</p>}<p className="mt-5 text-xs leading-5 muted">No password needed. We’ll email you a secure link to sign in.</p></section></main>
-
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 pb-28 pt-5 sm:px-7 sm:pt-8">
       <header className="mb-7 flex items-center justify-between">
         <div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-ink text-lime dark:bg-lime dark:text-ink"><Dumbbell size={21}/></div><div><p className="text-xs font-semibold uppercase tracking-[.18em] muted">Good morning, Mike</p><h1 className="text-xl font-bold tracking-tight">Let’s move.</h1></div></div>
-        <div className="flex items-center gap-2"><span className="hidden text-xs font-semibold text-emerald-600 sm:block">{authMessage || 'Synced'}</span><button onClick={signOut} className="grid h-11 w-11 place-items-center rounded-2xl glass" aria-label="Sign out"><LogOut size={18}/></button><button onClick={() => setDark(!dark)} className="grid h-11 w-11 place-items-center rounded-2xl glass" aria-label="Toggle theme">{dark ? <Sun size={19}/> : <Moon size={19}/>}</button></div>
+        <button onClick={() => setDark(!dark)} className="grid h-11 w-11 place-items-center rounded-2xl glass" aria-label="Toggle theme">{dark ? <Sun size={19}/> : <Moon size={19}/>}</button>
       </header>
 
       <section className="mb-5 grid gap-5 lg:grid-cols-[1.45fr_.9fr]">
@@ -172,7 +121,7 @@ export default function Home() {
             <p className="mt-2 text-sm leading-6 text-white/60">{runFocus ? <><span className="font-medium text-white">{runFocus}</span><br/>Up next: </> : 'Up next: '}<span className="font-medium text-white">{next.name}</span></p>
             <Button onClick={() => setRunning(!running)} className="mt-6 w-full gap-2">{running ? <><X size={17}/> Pause workout</> : <><Play size={17} fill="currentColor"/> Start workout</>}</Button>
           </section>
-          <section className="glass rounded-4xl p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Coach’s notes</p><h3 className="mt-1 text-lg font-bold">Today’s intention</h3></div><Trophy size={19} className="text-coral"/></div><textarea value={notes} onChange={e => updateNotes(e.target.value)} className="mt-4 min-h-24 w-full resize-none rounded-2xl bg-zinc-100 p-3 text-sm leading-6 outline-none ring-lime focus:ring-2 dark:bg-white/5"/><p className="mt-3 text-xs muted">Saved securely to your account.</p></section>
+          <section className="glass rounded-4xl p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Coach’s notes</p><h3 className="mt-1 text-lg font-bold">Today’s intention</h3></div><Trophy size={19} className="text-coral"/></div><textarea value={notes} onChange={e => updateNotes(e.target.value)} className="mt-4 min-h-24 w-full resize-none rounded-2xl bg-zinc-100 p-3 text-sm leading-6 outline-none ring-lime focus:ring-2 dark:bg-white/5"/><p className="mt-3 text-xs muted">Saved privately on this device.</p></section>
         </div>
       </section>
 
