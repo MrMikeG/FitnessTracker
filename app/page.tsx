@@ -68,10 +68,10 @@ export default function Home() {
   }, [])
   useEffect(() => {
     void (async () => {
-      const restored = await supabase.restoreSession()
-      setSession(restored)
-      if (restored) {
-        try {
+      try {
+        const restored = await supabase.restoreSession()
+        setSession(restored)
+        if (restored) {
           const cloudProgress = await supabase.getProgress(restored.user.id, restored.accessToken) as Partial<SavedProgress> | null
           if (cloudProgress) {
             if (cloudProgress.completedByDay) setCompletedByDay(cloudProgress.completedByDay)
@@ -81,10 +81,11 @@ export default function Home() {
             if (typeof cloudProgress.selectedWeek === 'number') setSelectedWeek(cloudProgress.selectedWeek)
             if (typeof cloudProgress.dark === 'boolean') setDark(cloudProgress.dark)
           }
-        } catch { setAuthMessage('Your account is signed in, but saved progress could not load yet.') }
-        setCloudReady(true)
-      }
-      setAuthLoading(false)
+          setCloudReady(true)
+        }
+      } catch {
+        setAuthMessage('We could not restore your session. Please sign in again.')
+      } finally { setAuthLoading(false) }
     })
   }, [])
   useEffect(() => {
