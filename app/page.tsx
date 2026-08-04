@@ -37,8 +37,8 @@ export default function Home() {
   const [skippedDays, setSkippedDays] = useState<string[]>([])
   const [dark, setDark] = useState(true)
   const [hydrated, setHydrated] = useState(false)
-  const [restPreset, setRestPreset] = useState(90)
-  const [restRemaining, setRestRemaining] = useState(90)
+  const [restPreset, setRestPreset] = useState(60)
+  const [restRemaining, setRestRemaining] = useState(60)
   const [restRunning, setRestRunning] = useState(false)
 
   const completed = completedByDay[workoutKey] ?? []
@@ -139,7 +139,7 @@ export default function Home() {
       <section className="glass rounded-3xl px-5 py-4"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">This week</p><p className="mt-1 font-bold">Tap a day to view and mark it complete.</p></div><ChevronRight className="muted"/></div><div className="mt-5 flex justify-between">{dayLabels.map((d, i) => { const key = `${selectedWeek}-${weekDayKeys[i]}`; const done = completedWorkouts.includes(key); return <button onClick={() => setSelectedDayIndex(i)} key={`${d}-${i}`} className="flex flex-col items-center gap-2"><span className="text-[11px] font-semibold muted">{dayNames[i]}</span><span className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold transition ${done ? 'bg-lime text-ink' : i === selectedDayIndex ? 'bg-ink text-white ring-2 ring-lime/60 dark:bg-white dark:text-ink' : 'bg-zinc-100 text-zinc-400 dark:bg-white/5'}`}>{done ? <Check size={15}/> : d}</span></button>})}</div></section>
       <button onClick={toggleWorkoutComplete} className={`mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border py-4 text-sm font-bold transition ${isWorkoutComplete ? 'border-lime bg-lime text-ink' : 'border-ink bg-ink text-white hover:scale-[1.01] dark:border-white dark:bg-white dark:text-ink'}`}><CircleCheck size={18}/>{isWorkoutComplete ? 'Undo workout day' : 'Workout Day Done'}</button>
       <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-[#0c0e0c]/95 px-4 py-3 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl items-center gap-4"><div className="min-w-max"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-zinc-500">12-week progress</p><p className="text-sm font-bold text-white">{completedWorkouts.length} <span className="font-medium text-zinc-500">of {totalPlanDays} days done</span></p></div><div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-lime transition-all duration-500" style={{ width: `${overallProgress}%` }}/></div><span className="text-sm font-bold text-lime">{overallProgress}%</span></div>
+      <div className="mx-auto flex max-w-6xl items-center gap-4"><p className="min-w-max text-xs font-bold uppercase tracking-[.15em] text-zinc-400">12-week progress</p><div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-lime transition-all duration-500" style={{ width: `${overallProgress}%` }}/></div><span className="text-sm font-bold text-lime">{overallProgress}%</span></div>
       </footer>
     </main>
   )
