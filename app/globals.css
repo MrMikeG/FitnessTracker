@@ -11,4 +11,6 @@
   .glass { @apply border border-white/70 bg-white/80 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-white/[.06] dark:shadow-none; }
   .muted { @apply text-zinc-500 dark:text-zinc-400; }
   .ring-progress { background: conic-gradient(#d9ff43 var(--progress), rgba(255,255,255,.14) 0); }
+  .confetti-piece { position: absolute; left: 50%; top: 50%; width: 7px; height: 11px; border-radius: 2px; opacity: 0; animation: confetti-burst .8s ease-out forwards; }
+  @keyframes confetti-burst { 0% { opacity: 1; transform: translate(-50%, -50%) rotate(0); } 100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)); } }
 }
