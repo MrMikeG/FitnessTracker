@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import plan from '@/data/training-plan.json'
-import { Check, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Flame, Moon, Pause, Play, RotateCcw, Settings2, SkipForward, Sun, Timer } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Flame, Moon, Pause, Play, RotateCcw, SkipForward, Sun, Timer } from 'lucide-react'
 
 type Exercise = (typeof plan.schedule)[keyof typeof plan.schedule]['exercises'][number]
 
@@ -21,9 +21,11 @@ type SavedProgress = {
 }
 
 export default function Home() {
-  const actualDayIndex = (new Date().getDay() + 6) % 7
-  const [selectedDayIndex, setSelectedDayIndex] = useState(actualDayIndex)
-  const [selectedWeek, setSelectedWeek] = useState(plan.week)
+  const [now, setNow] = useState(() => new Date())
+  const actualDayIndex = (now.getDay() + 6) % 7
+  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening'
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0)
+  const [selectedWeek, setSelectedWeek] = useState(1)
   const dayKey = weekDayKeys[selectedDayIndex]
   const workout = plan.schedule[dayKey]
   const weekIndex = selectedWeek - 1
@@ -33,7 +35,7 @@ export default function Home() {
   const [completedByDay, setCompletedByDay] = useState<Record<string, string[]>>({})
   const [completedWorkouts, setCompletedWorkouts] = useState<string[]>([])
   const [skippedDays, setSkippedDays] = useState<string[]>([])
-  const [dark, setDark] = useState(false)
+  const [dark, setDark] = useState(true)
   const [hydrated, setHydrated] = useState(false)
   const [restPreset, setRestPreset] = useState(90)
   const [restRemaining, setRestRemaining] = useState(90)
@@ -45,6 +47,10 @@ export default function Home() {
   const completedThisWeek = completedWorkouts.filter(key => key.startsWith(`${selectedWeek}-`)).length
 
   useEffect(() => { document.documentElement.classList.toggle('dark', dark) }, [dark])
+  useEffect(() => {
+    const clock = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(clock)
+  }, [])
   useEffect(() => {
     if (!restRunning) return
     if (restRemaining === 0) { setRestRunning(false); return }
@@ -61,7 +67,6 @@ export default function Home() {
         if (progress.skippedDays) setSkippedDays(progress.skippedDays)
         if (typeof progress.selectedDayIndex === 'number') setSelectedDayIndex(progress.selectedDayIndex)
         if (typeof progress.selectedWeek === 'number') setSelectedWeek(progress.selectedWeek)
-        if (typeof progress.dark === 'boolean') setDark(progress.dark)
       }
     } catch { window.localStorage.removeItem(storageKey) }
     setHydrated(true)
@@ -92,7 +97,7 @@ export default function Home() {
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 pb-28 pt-5 sm:px-7 sm:pt-8">
       <header className="mb-7 flex items-center justify-between">
-        <div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-ink text-lime dark:bg-lime dark:text-ink"><Dumbbell size={21}/></div><div><p className="text-xs font-semibold uppercase tracking-[.18em] muted">Good morning, Mike</p><h1 className="text-xl font-bold tracking-tight">Let’s move.</h1></div></div>
+        <div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-ink text-lime dark:bg-lime dark:text-ink"><Dumbbell size={21}/></div><div><p className="text-xs font-semibold uppercase tracking-[.18em] muted">{greeting}, Mike</p><h1 className="text-xl font-bold tracking-tight">Let’s move.</h1></div></div>
         <button onClick={() => setDark(!dark)} className="grid h-11 w-11 place-items-center rounded-2xl glass" aria-label="Toggle theme">{dark ? <Sun size={19}/> : <Moon size={19}/>}</button>
       </header>
 
@@ -107,7 +112,7 @@ export default function Home() {
         </div>
 
         <aside className="glass rounded-4xl p-6 sm:p-7">
-          <div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Training plan</p><h3 className="mt-1 text-xl font-bold">{plan.planName}</h3></div><button className="rounded-xl p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/10"><Settings2 size={18}/></button></div>
+          <div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Training plan</p><h3 className="mt-1 text-xl font-bold">{plan.planName}</h3></div>
           <div className="mt-7 flex items-center gap-5"><div className="ring-progress grid h-20 w-20 place-items-center rounded-full p-[6px]" style={{'--progress': `${(selectedWeek / plan.totalWeeks) * 100}%`} as React.CSSProperties}><div className="grid h-full w-full place-items-center rounded-full bg-white text-center dark:bg-[#161816]"><b className="text-lg leading-none">{selectedWeek}</b><span className="text-[10px] muted">OF {plan.totalWeeks}</span></div></div><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><p className="font-semibold">Week {selectedWeek} of {plan.totalWeeks}</p><div className="flex gap-1"><button onClick={() => changeWeek(-1)} disabled={selectedWeek === 1} className="rounded-lg p-1 disabled:opacity-25" aria-label="Previous week"><ChevronLeft size={16}/></button><button onClick={() => changeWeek(1)} disabled={selectedWeek === plan.totalWeeks} className="rounded-lg p-1 disabled:opacity-25" aria-label="Next week"><ChevronRight size={16}/></button></div></div><p className="mt-1 text-sm muted">{phase}</p><div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10"><div className="h-full rounded-full bg-lime" style={{width: `${(selectedWeek / plan.totalWeeks) * 100}%`}}/></div></div></div>
           <div className="mt-6 border-t pt-5 text-sm dark:border-white/10"><span className="font-bold">{completedThisWeek} of {plan.weeklyGoal}</span><span className="muted"> sessions complete this week</span></div>
         </aside>
