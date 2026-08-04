@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import plan from '@/data/training-plan.json'
-import { Check, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Flame, Moon, Settings2, SkipForward, Sun, Timer, Trophy } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Flame, Moon, Pause, Play, RotateCcw, Settings2, SkipForward, Sun, Timer } from 'lucide-react'
 
 type Exercise = (typeof plan.schedule)[keyof typeof plan.schedule]['exercises'][number]
 
@@ -15,7 +15,6 @@ type SavedProgress = {
   completedByDay: Record<string, string[]>
   completedWorkouts: string[]
   skippedDays: string[]
-  notesByWorkout: Record<string, string>
   selectedDayIndex: number
   selectedWeek: number
   dark: boolean
@@ -34,17 +33,24 @@ export default function Home() {
   const [completedByDay, setCompletedByDay] = useState<Record<string, string[]>>({})
   const [completedWorkouts, setCompletedWorkouts] = useState<string[]>([])
   const [skippedDays, setSkippedDays] = useState<string[]>([])
-  const [notesByWorkout, setNotesByWorkout] = useState<Record<string, string>>({})
   const [dark, setDark] = useState(false)
   const [hydrated, setHydrated] = useState(false)
+  const [restPreset, setRestPreset] = useState(90)
+  const [restRemaining, setRestRemaining] = useState(90)
+  const [restRunning, setRestRunning] = useState(false)
 
   const completed = completedByDay[workoutKey] ?? []
   const isWorkoutComplete = completedWorkouts.includes(workoutKey)
   const isSkipped = skippedDays.includes(workoutKey)
   const completedThisWeek = completedWorkouts.filter(key => key.startsWith(`${selectedWeek}-`)).length
-  const notes = notesByWorkout[workoutKey] ?? workout.coachNote
 
   useEffect(() => { document.documentElement.classList.toggle('dark', dark) }, [dark])
+  useEffect(() => {
+    if (!restRunning) return
+    if (restRemaining === 0) { setRestRunning(false); return }
+    const timer = window.setInterval(() => setRestRemaining(seconds => Math.max(0, seconds - 1)), 1000)
+    return () => window.clearInterval(timer)
+  }, [restRemaining, restRunning])
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(storageKey)
@@ -53,7 +59,6 @@ export default function Home() {
         if (progress.completedByDay) setCompletedByDay(progress.completedByDay)
         if (progress.completedWorkouts) setCompletedWorkouts(progress.completedWorkouts)
         if (progress.skippedDays) setSkippedDays(progress.skippedDays)
-        if (progress.notesByWorkout) setNotesByWorkout(progress.notesByWorkout)
         if (typeof progress.selectedDayIndex === 'number') setSelectedDayIndex(progress.selectedDayIndex)
         if (typeof progress.selectedWeek === 'number') setSelectedWeek(progress.selectedWeek)
         if (typeof progress.dark === 'boolean') setDark(progress.dark)
@@ -63,9 +68,9 @@ export default function Home() {
   }, [])
   useEffect(() => {
     if (!hydrated) return
-    const progress: SavedProgress = { completedByDay, completedWorkouts, skippedDays, notesByWorkout, selectedDayIndex, selectedWeek, dark }
+    const progress: SavedProgress = { completedByDay, completedWorkouts, skippedDays, selectedDayIndex, selectedWeek, dark }
     window.localStorage.setItem(storageKey, JSON.stringify(progress))
-  }, [completedByDay, completedWorkouts, dark, hydrated, notesByWorkout, selectedDayIndex, selectedWeek, skippedDays])
+  }, [completedByDay, completedWorkouts, dark, hydrated, selectedDayIndex, selectedWeek, skippedDays])
 
   const percent = Math.round((completed.length / exercises.length) * 100)
   const toggle = (id: string) => setCompletedByDay(days => {
@@ -82,7 +87,8 @@ export default function Home() {
     setSkippedDays(days => days.filter(day => day !== workoutKey))
   }
   const changeWeek = (direction: number) => setSelectedWeek(week => Math.min(plan.totalWeeks, Math.max(1, week + direction)))
-  const updateNotes = (note: string) => setNotesByWorkout(current => ({ ...current, [workoutKey]: note }))
+  const chooseRestPreset = (seconds: number) => { setRestPreset(seconds); setRestRemaining(seconds); setRestRunning(false) }
+  const restTime = `${String(Math.floor(restRemaining / 60)).padStart(2, '0')}:${String(restRemaining % 60).padStart(2, '0')}`
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 pb-28 pt-5 sm:px-7 sm:pt-8">
       <header className="mb-7 flex items-center justify-between">
@@ -107,7 +113,7 @@ export default function Home() {
         </aside>
       </section>
 
-      <section className="mb-5 grid gap-5 lg:grid-cols-[1.45fr_.9fr]">
+      <section className="mb-5">
         <div className="glass rounded-4xl p-5 sm:p-7">
           <div className="flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Your workout</p><h2 className="mt-1 text-2xl font-bold">{selectedDayIndex === actualDayIndex ? 'Today’s' : `${workout.day}'s`} exercises</h2></div><span className="text-sm font-semibold text-zinc-500">{isSkipped ? 'Skipped' : isWorkoutComplete ? 'Complete' : `${completed.length}/${exercises.length} done`}</span></div>
           <div className="mt-5 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/10"><div className="h-full rounded-full bg-lime transition-all duration-500" style={{width: `${percent}%`}}/></div>
@@ -115,9 +121,12 @@ export default function Home() {
           <button onClick={toggleSkip} className={`mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-semibold transition ${isSkipped ? 'border-coral bg-coral text-white' : 'border-zinc-200 text-zinc-500 hover:border-coral hover:text-coral dark:border-white/10'}`}><SkipForward size={16}/>{isSkipped ? 'Undo skip' : 'Skip workout'}</button>
         </div>
 
-        <div className="space-y-5">
-          <section className="glass rounded-4xl p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Coach’s notes</p><h3 className="mt-1 text-lg font-bold">Today’s intention</h3></div><Trophy size={19} className="text-coral"/></div><textarea value={notes} onChange={e => updateNotes(e.target.value)} className="mt-4 min-h-24 w-full resize-none rounded-2xl bg-zinc-100 p-3 text-sm leading-6 outline-none ring-lime focus:ring-2 dark:bg-white/5"/><p className="mt-3 text-xs muted">Saved privately on this device.</p></section>
-        </div>
+      </section>
+
+      <section className="glass mb-5 rounded-3xl p-5 sm:p-6">
+        <div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Rest timer</p><h2 className="mt-1 text-xl font-bold">Recovery between sets</h2></div><Timer size={21} className="text-coral"/></div>
+        <div className="mt-5 flex items-center gap-5"><div className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-ink text-2xl font-bold tabular-nums text-lime dark:bg-white dark:text-ink">{restTime}</div><div className="grid flex-1 grid-cols-3 gap-2">{[60, 120, 180].map(seconds => <button key={seconds} onClick={() => chooseRestPreset(seconds)} className={`rounded-xl py-2 text-sm font-bold transition ${restPreset === seconds ? 'bg-lime text-ink' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-white/5 dark:text-zinc-300 dark:hover:bg-white/10'}`}>{seconds / 60} min</button>)}</div></div>
+        <div className="mt-5 grid grid-cols-[1fr_auto] gap-2"><button onClick={() => setRestRunning(running => !running)} className="flex items-center justify-center gap-2 rounded-2xl bg-ink py-3 text-sm font-bold text-white transition hover:scale-[1.01] dark:bg-white dark:text-ink">{restRunning ? <><Pause size={17} fill="currentColor"/> Pause</> : <><Play size={17} fill="currentColor"/> {restRemaining === 0 ? 'Restart timer' : 'Start rest'}</>}</button><button onClick={() => { setRestRemaining(restPreset); setRestRunning(false) }} className="grid w-12 place-items-center rounded-2xl border border-zinc-200 text-zinc-500 transition hover:text-ink dark:border-white/10 dark:hover:text-white" aria-label="Reset rest timer"><RotateCcw size={18}/></button></div>
       </section>
 
       <section className="glass rounded-3xl px-5 py-4"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">This week</p><p className="mt-1 font-bold">Tap a day to view and mark it complete.</p></div><ChevronRight className="muted"/></div><div className="mt-5 flex justify-between">{dayLabels.map((d, i) => { const key = `${selectedWeek}-${weekDayKeys[i]}`; const done = completedWorkouts.includes(key); return <button onClick={() => setSelectedDayIndex(i)} key={`${d}-${i}`} className="flex flex-col items-center gap-2"><span className="text-[11px] font-semibold muted">{dayNames[i]}</span><span className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold transition ${done ? 'bg-lime text-ink' : i === selectedDayIndex ? 'bg-ink text-white ring-2 ring-lime/60 dark:bg-white dark:text-ink' : 'bg-zinc-100 text-zinc-400 dark:bg-white/5'}`}>{done ? <Check size={15}/> : d}</span></button>})}</div></section>
