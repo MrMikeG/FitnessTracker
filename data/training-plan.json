@@ -24,7 +24,8 @@
         { "id": "db-shoulder", "name": "Dumbbell Shoulder Press", "detail": "3 sets × 10 reps", "load": "Working weight", "rest": "75 sec" },
         { "id": "cable-row", "name": "Seated Cable Row", "detail": "3 sets × 10 reps", "load": "Controlled", "rest": "75 sec" },
         { "id": "incline-db", "name": "Incline Dumbbell Press", "detail": "3 sets × 10 reps", "load": "Working weight", "rest": "75 sec" },
-        { "id": "plank", "name": "Plank", "detail": "3 sets × 45 sec", "load": "Bodyweight", "rest": "45 sec" }
+        { "id": "plank", "name": "Plank", "detail": "3 sets × 45 sec", "load": "Bodyweight", "rest": "45 sec" },
+        { "id": "easy-run", "name": "Easy Run", "detail": "Week-specific duration", "load": "Conversational pace", "rest": "—" }
       ]
     },
     "tuesday": {

@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import plan from '@/data/training-plan.json'
-import { Check, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Flame, Moon, Play, Settings2, SkipForward, Sun, Timer, Trophy, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Check, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Flame, Moon, Settings2, SkipForward, Sun, Timer, Trophy } from 'lucide-react'
 
 type Exercise = (typeof plan.schedule)[keyof typeof plan.schedule]['exercises'][number]
 
@@ -31,14 +30,11 @@ export default function Home() {
   const weekIndex = selectedWeek - 1
   const workoutKey = `${selectedWeek}-${dayKey}`
   const phase = selectedWeek <= 4 ? 'Foundation phase' : selectedWeek <= 8 ? 'Build the aerobic base' : 'Endurance phase'
-  const runFocus = dayKey === 'monday' ? `Easy run · ${plan.weekSettings.easyRun[weekIndex]}` : dayKey === 'wednesday' ? plan.weekSettings.speedRun[weekIndex] : dayKey === 'saturday' ? `${plan.weekSettings.longRunMiles[weekIndex]} mile long run` : null
-  const exercises = workout.exercises.map(exercise => exercise.id === 'speed-session' ? { ...exercise, detail: plan.weekSettings.speedRun[weekIndex] } : exercise.id === 'long-run' ? { ...exercise, detail: `${plan.weekSettings.longRunMiles[weekIndex]} miles · easy conversational pace` } : exercise)
+  const exercises = workout.exercises.map(exercise => exercise.id === 'easy-run' ? { ...exercise, detail: `${plan.weekSettings.easyRun[weekIndex]} · easy conversational pace` } : exercise.id === 'speed-session' ? { ...exercise, detail: plan.weekSettings.speedRun[weekIndex] } : exercise.id === 'long-run' ? { ...exercise, detail: `${plan.weekSettings.longRunMiles[weekIndex]} miles · easy conversational pace` } : exercise)
   const [completedByDay, setCompletedByDay] = useState<Record<string, string[]>>({})
   const [completedWorkouts, setCompletedWorkouts] = useState<string[]>([])
   const [skippedDays, setSkippedDays] = useState<string[]>([])
   const [notesByWorkout, setNotesByWorkout] = useState<Record<string, string>>({})
-  const [running, setRunning] = useState(false)
-  const [elapsed, setElapsed] = useState(0)
   const [dark, setDark] = useState(false)
   const [hydrated, setHydrated] = useState(false)
 
@@ -70,15 +66,8 @@ export default function Home() {
     const progress: SavedProgress = { completedByDay, completedWorkouts, skippedDays, notesByWorkout, selectedDayIndex, selectedWeek, dark }
     window.localStorage.setItem(storageKey, JSON.stringify(progress))
   }, [completedByDay, completedWorkouts, dark, hydrated, notesByWorkout, selectedDayIndex, selectedWeek, skippedDays])
-  useEffect(() => {
-    if (!running) return
-    const t = window.setInterval(() => setElapsed(s => s + 1), 1000)
-    return () => window.clearInterval(t)
-  }, [running])
 
   const percent = Math.round((completed.length / exercises.length) * 100)
-  const time = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`
-  const next = useMemo(() => exercises.find(e => !completed.includes(e.id)) ?? exercises[0], [completed, exercises])
   const toggle = (id: string) => setCompletedByDay(days => {
     const current = days[workoutKey] ?? []
     return { ...days, [workoutKey]: current.includes(id) ? current.filter(x => x !== id) : [...current, id] }
@@ -127,12 +116,6 @@ export default function Home() {
         </div>
 
         <div className="space-y-5">
-          <section className={`rounded-4xl p-6 text-white shadow-soft ${running ? 'bg-[#26483f]' : 'bg-[#1c3029]'}`}>
-            <div className="flex items-center justify-between"><span className="text-xs font-bold tracking-[.16em] text-lime">RUNNING WORKOUT</span><span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium">{time}</span></div>
-            <h3 className="mt-6 text-xl font-bold">{running ? 'You’re in the zone.' : 'Ready when you are.'}</h3>
-            <p className="mt-2 text-sm leading-6 text-white/60">{runFocus ? <><span className="font-medium text-white">{runFocus}</span><br/>Up next: </> : 'Up next: '}<span className="font-medium text-white">{next.name}</span></p>
-            <Button onClick={() => setRunning(!running)} className="mt-6 w-full gap-2">{running ? <><X size={17}/> Pause workout</> : <><Play size={17} fill="currentColor"/> Start workout</>}</Button>
-          </section>
           <section className="glass rounded-4xl p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Coach’s notes</p><h3 className="mt-1 text-lg font-bold">Today’s intention</h3></div><Trophy size={19} className="text-coral"/></div><textarea value={notes} onChange={e => updateNotes(e.target.value)} className="mt-4 min-h-24 w-full resize-none rounded-2xl bg-zinc-100 p-3 text-sm leading-6 outline-none ring-lime focus:ring-2 dark:bg-white/5"/><p className="mt-3 text-xs muted">Saved privately on this device.</p></section>
         </div>
       </section>
