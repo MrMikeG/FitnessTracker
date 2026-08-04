@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import plan from '@/data/training-plan.json'
-import { Check, ChevronLeft, ChevronRight, Dumbbell, Flame, Moon, Play, Plus, Settings2, SkipForward, Sun, Timer, Trophy, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Flame, Moon, Play, Settings2, SkipForward, Sun, Timer, Trophy, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 type Exercise = (typeof plan.schedule)[keyof typeof plan.schedule]['exercises'][number]
@@ -10,10 +10,11 @@ type Exercise = (typeof plan.schedule)[keyof typeof plan.schedule]['exercises'][
 const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const weekDayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
-const storageKey = 'pulse-training-progress-v1'
+const storageKey = 'pulse-training-progress-v2'
 
 type SavedProgress = {
   completedByDay: Record<string, string[]>
+  completedWorkouts: string[]
   skippedDays: string[]
   notesByWorkout: Record<string, string>
   selectedDayIndex: number
@@ -33,6 +34,7 @@ export default function Home() {
   const runFocus = dayKey === 'monday' ? `Easy run · ${plan.weekSettings.easyRun[weekIndex]}` : dayKey === 'wednesday' ? plan.weekSettings.speedRun[weekIndex] : dayKey === 'saturday' ? `${plan.weekSettings.longRunMiles[weekIndex]} mile long run` : null
   const exercises = workout.exercises.map(exercise => exercise.id === 'speed-session' ? { ...exercise, detail: plan.weekSettings.speedRun[weekIndex] } : exercise.id === 'long-run' ? { ...exercise, detail: `${plan.weekSettings.longRunMiles[weekIndex]} miles · easy conversational pace` } : exercise)
   const [completedByDay, setCompletedByDay] = useState<Record<string, string[]>>({})
+  const [completedWorkouts, setCompletedWorkouts] = useState<string[]>([])
   const [skippedDays, setSkippedDays] = useState<string[]>([])
   const [notesByWorkout, setNotesByWorkout] = useState<Record<string, string>>({})
   const [running, setRunning] = useState(false)
@@ -41,7 +43,9 @@ export default function Home() {
   const [hydrated, setHydrated] = useState(false)
 
   const completed = completedByDay[workoutKey] ?? []
+  const isWorkoutComplete = completedWorkouts.includes(workoutKey)
   const isSkipped = skippedDays.includes(workoutKey)
+  const completedThisWeek = completedWorkouts.filter(key => key.startsWith(`${selectedWeek}-`)).length
   const notes = notesByWorkout[workoutKey] ?? workout.coachNote
 
   useEffect(() => { document.documentElement.classList.toggle('dark', dark) }, [dark])
@@ -51,6 +55,7 @@ export default function Home() {
       if (saved) {
         const progress = JSON.parse(saved) as Partial<SavedProgress>
         if (progress.completedByDay) setCompletedByDay(progress.completedByDay)
+        if (progress.completedWorkouts) setCompletedWorkouts(progress.completedWorkouts)
         if (progress.skippedDays) setSkippedDays(progress.skippedDays)
         if (progress.notesByWorkout) setNotesByWorkout(progress.notesByWorkout)
         if (typeof progress.selectedDayIndex === 'number') setSelectedDayIndex(progress.selectedDayIndex)
@@ -62,9 +67,9 @@ export default function Home() {
   }, [])
   useEffect(() => {
     if (!hydrated) return
-    const progress: SavedProgress = { completedByDay, skippedDays, notesByWorkout, selectedDayIndex, selectedWeek, dark }
+    const progress: SavedProgress = { completedByDay, completedWorkouts, skippedDays, notesByWorkout, selectedDayIndex, selectedWeek, dark }
     window.localStorage.setItem(storageKey, JSON.stringify(progress))
-  }, [completedByDay, dark, hydrated, notesByWorkout, selectedDayIndex, selectedWeek, skippedDays])
+  }, [completedByDay, completedWorkouts, dark, hydrated, notesByWorkout, selectedDayIndex, selectedWeek, skippedDays])
   useEffect(() => {
     if (!running) return
     const t = window.setInterval(() => setElapsed(s => s + 1), 1000)
@@ -79,7 +84,14 @@ export default function Home() {
     return { ...days, [workoutKey]: current.includes(id) ? current.filter(x => x !== id) : [...current, id] }
   })
   const changeDay = (direction: number) => setSelectedDayIndex(index => (index + direction + 7) % 7)
-  const toggleSkip = () => setSkippedDays(days => days.includes(workoutKey) ? days.filter(day => day !== workoutKey) : [...days, workoutKey])
+  const toggleSkip = () => {
+    setSkippedDays(days => days.includes(workoutKey) ? days.filter(day => day !== workoutKey) : [...days, workoutKey])
+    setCompletedWorkouts(days => days.filter(day => day !== workoutKey))
+  }
+  const toggleWorkoutComplete = () => {
+    setCompletedWorkouts(days => days.includes(workoutKey) ? days.filter(day => day !== workoutKey) : [...days, workoutKey])
+    setSkippedDays(days => days.filter(day => day !== workoutKey))
+  }
   const changeWeek = (direction: number) => setSelectedWeek(week => Math.min(plan.totalWeeks, Math.max(1, week + direction)))
   const updateNotes = (note: string) => setNotesByWorkout(current => ({ ...current, [workoutKey]: note }))
   return (
@@ -102,16 +114,16 @@ export default function Home() {
         <aside className="glass rounded-4xl p-6 sm:p-7">
           <div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Training plan</p><h3 className="mt-1 text-xl font-bold">{plan.planName}</h3></div><button className="rounded-xl p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/10"><Settings2 size={18}/></button></div>
           <div className="mt-7 flex items-center gap-5"><div className="ring-progress grid h-20 w-20 place-items-center rounded-full p-[6px]" style={{'--progress': `${(selectedWeek / plan.totalWeeks) * 100}%`} as React.CSSProperties}><div className="grid h-full w-full place-items-center rounded-full bg-white text-center dark:bg-[#161816]"><b className="text-lg leading-none">{selectedWeek}</b><span className="text-[10px] muted">OF {plan.totalWeeks}</span></div></div><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><p className="font-semibold">Week {selectedWeek} of {plan.totalWeeks}</p><div className="flex gap-1"><button onClick={() => changeWeek(-1)} disabled={selectedWeek === 1} className="rounded-lg p-1 disabled:opacity-25" aria-label="Previous week"><ChevronLeft size={16}/></button><button onClick={() => changeWeek(1)} disabled={selectedWeek === plan.totalWeeks} className="rounded-lg p-1 disabled:opacity-25" aria-label="Next week"><ChevronRight size={16}/></button></div></div><p className="mt-1 text-sm muted">{phase}</p><div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10"><div className="h-full rounded-full bg-lime" style={{width: `${(selectedWeek / plan.totalWeeks) * 100}%`}}/></div></div></div>
-          <div className="mt-6 border-t pt-5 text-sm dark:border-white/10"><span className="font-bold">{selectedWeek === plan.week ? plan.completedThisWeek : 0} of {plan.weeklyGoal}</span><span className="muted"> sessions complete this week{selectedWeek !== plan.week ? ' (preview)' : ''}</span></div>
+          <div className="mt-6 border-t pt-5 text-sm dark:border-white/10"><span className="font-bold">{completedThisWeek} of {plan.weeklyGoal}</span><span className="muted"> sessions complete this week</span></div>
         </aside>
       </section>
 
       <section className="mb-5 grid gap-5 lg:grid-cols-[1.45fr_.9fr]">
         <div className="glass rounded-4xl p-5 sm:p-7">
-          <div className="flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Your workout</p><h2 className="mt-1 text-2xl font-bold">{selectedDayIndex === actualDayIndex ? 'Today’s' : `${workout.day}'s`} exercises</h2></div><span className="text-sm font-semibold text-zinc-500">{isSkipped ? 'Skipped' : `${completed.length}/${exercises.length} done`}</span></div>
+          <div className="flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Your workout</p><h2 className="mt-1 text-2xl font-bold">{selectedDayIndex === actualDayIndex ? 'Today’s' : `${workout.day}'s`} exercises</h2></div><span className="text-sm font-semibold text-zinc-500">{isSkipped ? 'Skipped' : isWorkoutComplete ? 'Complete' : `${completed.length}/${exercises.length} done`}</span></div>
           <div className="mt-5 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/10"><div className="h-full rounded-full bg-lime transition-all duration-500" style={{width: `${percent}%`}}/></div>
           <div className={`mt-5 space-y-2 ${isSkipped ? 'opacity-40' : ''}`}>{exercises.map((ex, i) => <ExerciseRow key={`${ex.id}-${i}`} exercise={ex} number={i + 1} checked={completed.includes(ex.id)} onToggle={() => toggle(ex.id)} />)}</div>
-          <div className="mt-5 grid grid-cols-2 gap-2"><button className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-zinc-300 py-3 text-sm font-semibold muted transition hover:border-zinc-500 hover:text-ink dark:border-white/15 dark:hover:text-white"><Plus size={16}/> Add exercise</button><button onClick={toggleSkip} className={`flex items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-semibold transition ${isSkipped ? 'border-coral bg-coral text-white' : 'border-zinc-200 text-zinc-500 hover:border-coral hover:text-coral dark:border-white/10'}`}><SkipForward size={16}/>{isSkipped ? 'Undo skip' : 'Skip workout'}</button></div>
+          <div className="mt-5 grid grid-cols-2 gap-2"><button onClick={toggleWorkoutComplete} className={`flex items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-semibold transition ${isWorkoutComplete ? 'border-lime bg-lime text-ink' : 'border-zinc-200 text-zinc-600 hover:border-lime dark:border-white/10 dark:text-zinc-300'}`}><CircleCheck size={17}/>{isWorkoutComplete ? 'Undo complete' : 'Mark workout done'}</button><button onClick={toggleSkip} className={`flex items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-semibold transition ${isSkipped ? 'border-coral bg-coral text-white' : 'border-zinc-200 text-zinc-500 hover:border-coral hover:text-coral dark:border-white/10'}`}><SkipForward size={16}/>{isSkipped ? 'Undo skip' : 'Skip workout'}</button></div>
         </div>
 
         <div className="space-y-5">
@@ -125,7 +137,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="glass rounded-3xl px-5 py-4"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">This week</p><p className="mt-1 font-bold">Tap a day to view that workout.</p></div><ChevronRight className="muted"/></div><div className="mt-5 flex justify-between">{dayLabels.map((d, i) => <button onClick={() => setSelectedDayIndex(i)} key={`${d}-${i}`} className="flex flex-col items-center gap-2"><span className="text-[11px] font-semibold muted">{dayNames[i]}</span><span className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold transition ${i < plan.completedThisWeek ? 'bg-lime text-ink' : i === selectedDayIndex ? 'bg-ink text-white ring-2 ring-lime/60 dark:bg-white dark:text-ink' : 'bg-zinc-100 text-zinc-400 dark:bg-white/5'}`}>{i < plan.completedThisWeek ? <Check size={15}/> : d}</span></button>)}</div></section>
+      <section className="glass rounded-3xl px-5 py-4"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">This week</p><p className="mt-1 font-bold">Tap a day to view and mark it complete.</p></div><ChevronRight className="muted"/></div><div className="mt-5 flex justify-between">{dayLabels.map((d, i) => { const key = `${selectedWeek}-${weekDayKeys[i]}`; const done = completedWorkouts.includes(key); return <button onClick={() => setSelectedDayIndex(i)} key={`${d}-${i}`} className="flex flex-col items-center gap-2"><span className="text-[11px] font-semibold muted">{dayNames[i]}</span><span className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold transition ${done ? 'bg-lime text-ink' : i === selectedDayIndex ? 'bg-ink text-white ring-2 ring-lime/60 dark:bg-white dark:text-ink' : 'bg-zinc-100 text-zinc-400 dark:bg-white/5'}`}>{done ? <Check size={15}/> : d}</span></button>})}</div></section>
     </main>
   )
 }

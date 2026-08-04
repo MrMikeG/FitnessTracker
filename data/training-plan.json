@@ -4,7 +4,7 @@
   "totalWeeks": 12,
   "phase": "Build the aerobic base",
   "weeklyGoal": 6,
-  "completedThisWeek": 2,
+  "completedThisWeek": 0,
   "weekSettings": {
     "easyRun": ["20–30 min", "20–30 min", "20–30 min", "20–30 min", "30–35 min", "30–35 min", "30–35 min", "30–35 min", "35–45 min", "35–45 min", "35–45 min", "35–45 min"],
     "speedRun": ["Run 1 min / walk 2 min · 8–10 rounds", "Run 1 min / walk 2 min · 8–10 rounds", "Run 1 min / walk 2 min · 8–10 rounds", "Run 1 min / walk 2 min · 8–10 rounds", "Run 3 min / walk 1 min · repeat", "Run 3 min / walk 1 min · repeat", "Run 3 min / walk 1 min · repeat", "Run 3 min / walk 1 min · repeat", "6 × 400 m fast · easy recovery", "6 × 400 m fast · easy recovery", "6 × 400 m fast · easy recovery", "6 × 400 m fast · easy recovery"],
