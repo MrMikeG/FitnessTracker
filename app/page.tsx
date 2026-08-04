@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import plan from '@/data/training-plan.json'
-import { Check, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Flame, Moon, Pause, Play, RotateCcw, SkipForward, Sun, Timer } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Flame, ImageIcon, Moon, Pause, Play, RotateCcw, SkipForward, Sun, Timer, X } from 'lucide-react'
+import imageMap from '@/data/workout-images.json'
 
 type Exercise = (typeof plan.schedule)[keyof typeof plan.schedule]['exercises'][number]
 
@@ -10,6 +11,7 @@ const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const weekDayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
 const storageKey = 'pulse-training-progress-v2'
+const workoutImages = imageMap as Record<string, string>
 
 type SavedProgress = {
   completedByDay: Record<string, string[]>
@@ -41,6 +43,7 @@ export default function Home() {
   const [restRemaining, setRestRemaining] = useState(60)
   const [restRunning, setRestRunning] = useState(false)
   const [celebrating, setCelebrating] = useState(false)
+  const [preview, setPreview] = useState<{ name: string; image?: string } | null>(null)
 
   const completed = completedByDay[workoutKey] ?? []
   const isWorkoutComplete = completedWorkouts.includes(workoutKey)
@@ -129,7 +132,7 @@ export default function Home() {
         <div className="glass rounded-4xl p-5 sm:p-7">
           <div className="flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Your workout</p><h2 className="mt-1 text-2xl font-bold">{selectedDayIndex === actualDayIndex ? 'Today’s' : `${workout.day}'s`} exercises</h2></div><span className="text-sm font-semibold text-zinc-500">{isSkipped ? 'Skipped' : isWorkoutComplete ? 'Complete' : `${completed.length}/${exercises.length} done`}</span></div>
           <div className="mt-5 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/10"><div className="h-full rounded-full bg-lime transition-all duration-500" style={{width: `${percent}%`}}/></div>
-          <div className={`mt-5 space-y-2 ${isSkipped ? 'opacity-40' : ''}`}>{exercises.map((ex, i) => <ExerciseRow key={`${ex.id}-${i}`} exercise={ex} number={i + 1} checked={completed.includes(ex.id)} onToggle={() => toggle(ex.id)} />)}</div>
+          <div className={`mt-5 space-y-2 ${isSkipped ? 'opacity-40' : ''}`}>{exercises.map((ex, i) => <ExerciseRow key={`${ex.id}-${i}`} exercise={ex} number={i + 1} checked={completed.includes(ex.id)} onToggle={() => toggle(ex.id)} onPreview={() => setPreview({ name: ex.name, image: workoutImages[ex.id] })} />)}</div>
           <button onClick={toggleSkip} className={`mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-semibold transition ${isSkipped ? 'border-coral bg-coral text-white' : 'border-zinc-200 text-zinc-500 hover:border-coral hover:text-coral dark:border-white/10'}`}><SkipForward size={16}/>{isSkipped ? 'Undo skip' : 'Skip workout'}</button>
         </div>
 
@@ -143,6 +146,7 @@ export default function Home() {
 
       <section className="glass rounded-3xl px-5 py-4"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">This week</p><p className="mt-1 font-bold">Week {selectedWeek} of {plan.totalWeeks}</p></div><div className="flex items-center gap-1"><button onClick={() => changeWeek(-1)} disabled={selectedWeek === 1} className="grid h-9 w-9 place-items-center rounded-xl text-zinc-400 transition hover:bg-white/10 hover:text-white disabled:opacity-25" aria-label="Previous week"><ChevronLeft size={19}/></button><button onClick={() => changeWeek(1)} disabled={selectedWeek === plan.totalWeeks} className="grid h-9 w-9 place-items-center rounded-xl text-zinc-400 transition hover:bg-white/10 hover:text-white disabled:opacity-25" aria-label="Next week"><ChevronRight size={19}/></button></div></div><div className="mt-5 flex justify-between">{dayLabels.map((d, i) => { const key = `${selectedWeek}-${weekDayKeys[i]}`; const done = completedWorkouts.includes(key); return <button onClick={() => setSelectedDayIndex(i)} key={`${d}-${i}`} className="flex flex-col items-center gap-2"><span className="text-[11px] font-semibold muted">{dayNames[i]}</span><span className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold transition ${done ? 'bg-lime text-ink' : i === selectedDayIndex ? 'bg-ink text-white ring-2 ring-lime/60 dark:bg-white dark:text-ink' : 'bg-zinc-100 text-zinc-400 dark:bg-white/5'}`}>{done ? <Check size={15}/> : d}</span></button>})}</div></section>
       <button onClick={toggleWorkoutComplete} className={`relative mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border py-4 text-sm font-bold transition ${isWorkoutComplete ? 'border-lime bg-lime text-ink' : 'border-ink bg-ink text-white hover:scale-[1.01] dark:border-white dark:bg-white dark:text-ink'}`}><CircleCheck size={18}/>{isWorkoutComplete ? 'Undo today’s completion' : 'Completed Today’s Workout'}{celebrating && <span aria-hidden className="pointer-events-none absolute inset-0 overflow-visible">{Array.from({ length: 26 }, (_, index) => <i key={index} className="confetti-piece" style={{ '--x': `${((index % 9) - 4) * 28}px`, '--y': `${-70 - (index % 5) * 18}px`, '--r': `${index * 27}deg`, animationDelay: `${(index % 6) * 24}ms`, backgroundColor: ['#d9ff43', '#ff5b50', '#ffffff', '#7dd3fc'][index % 4] } as React.CSSProperties}/>)}</span>}</button>
+      {preview && <div onClick={() => setPreview(null)} className="fixed inset-0 z-30 grid place-items-center bg-black/70 p-5 backdrop-blur-sm"><section onClick={event => event.stopPropagation()} className="glass w-full max-w-md overflow-hidden rounded-4xl p-5 dark:bg-[#181b18]"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Exercise preview</p><h2 className="mt-1 text-xl font-bold">{preview.name}</h2></div><button onClick={() => setPreview(null)} className="grid h-9 w-9 place-items-center rounded-xl bg-zinc-100 dark:bg-white/10" aria-label="Close preview"><X size={18}/></button></div>{preview.image ? <img src={preview.image} onError={() => setPreview(current => current ? { ...current, image: undefined } : null)} alt={preview.name} className="mt-5 aspect-video w-full rounded-2xl object-cover"/> : <div className="mt-5 grid aspect-video place-items-center rounded-2xl bg-zinc-100 text-center dark:bg-white/5"><div><ImageIcon className="mx-auto text-zinc-400" size={34}/><p className="mt-3 font-bold">No Image for workout</p><p className="mt-1 text-sm muted">An exercise image will be added soon.</p></div></div>}</section></div>}
       <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-[#0c0e0c]/95 px-4 py-3 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center gap-4"><p className="min-w-max text-xs font-bold uppercase tracking-[.15em] text-zinc-400">12-week progress</p><div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-lime transition-all duration-500" style={{ width: `${overallProgress}%` }}/></div><span className="text-sm font-bold text-lime">{overallProgress}%</span></div>
       </footer>
@@ -150,6 +154,6 @@ export default function Home() {
   )
 }
 
-function ExerciseRow({ exercise, number, checked, onToggle }: { exercise: Exercise; number: number; checked: boolean; onToggle: () => void }) {
-  return <button onClick={onToggle} className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition sm:gap-4 sm:p-4 ${checked ? 'border-lime/50 bg-lime/10' : 'border-transparent bg-zinc-50 hover:border-zinc-200 dark:bg-white/[.035] dark:hover:border-white/15'}`}><span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${checked ? 'border-lime bg-lime text-ink' : 'border-zinc-300 dark:border-zinc-600'}`}>{checked ? <Check size={14} strokeWidth={3}/> : <span className="text-[10px] font-bold text-zinc-400">{number}</span>}</span><span className="min-w-0 flex-1"><span className={`block text-sm font-bold ${checked ? 'line-through opacity-50' : ''}`}>{exercise.name}</span><span className="mt-0.5 block text-xs muted">{exercise.detail} <span className="mx-1">·</span> {exercise.load}</span></span><span className="hidden rounded-lg bg-white px-2 py-1 text-[11px] font-semibold muted shadow-sm dark:bg-white/5 sm:block">{exercise.rest}</span></button>
+function ExerciseRow({ exercise, number, checked, onToggle, onPreview }: { exercise: Exercise; number: number; checked: boolean; onToggle: () => void; onPreview: () => void }) {
+  return <div className={`flex w-full items-center gap-2 rounded-2xl border p-3 transition sm:gap-3 sm:p-4 ${checked ? 'border-lime/50 bg-lime/10' : 'border-transparent bg-zinc-50 hover:border-zinc-200 dark:bg-white/[.035] dark:hover:border-white/15'}`}><button onClick={onToggle} className="flex min-w-0 flex-1 items-center gap-3 text-left sm:gap-4"><span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${checked ? 'border-lime bg-lime text-ink' : 'border-zinc-300 dark:border-zinc-600'}`}>{checked ? <Check size={14} strokeWidth={3}/> : <span className="text-[10px] font-bold text-zinc-400">{number}</span>}</span><span className="min-w-0 flex-1"><span className={`block text-sm font-bold ${checked ? 'line-through opacity-50' : ''}`}>{exercise.name}</span><span className="mt-0.5 block text-xs muted">{exercise.detail} <span className="mx-1">·</span> {exercise.load}</span></span></button><button onClick={onPreview} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-zinc-500 shadow-sm transition hover:text-ink dark:bg-white/5 dark:hover:text-white" aria-label={`View image for ${exercise.name}`}><ImageIcon size={17}/></button><span className="hidden rounded-lg bg-white px-2 py-1 text-[11px] font-semibold muted shadow-sm dark:bg-white/5 md:block">{exercise.rest}</span></div>
 }
