@@ -41,7 +41,9 @@
         { "id": "lunges", "name": "Walking Lunges", "detail": "3 sets × 12 each leg", "load": "Dumbbells optional", "rest": "75 sec" },
         { "id": "leg-curl", "name": "Leg Curl", "detail": "3 sets × 12 reps", "load": "Controlled", "rest": "60 sec" },
         { "id": "calf-raise", "name": "Calf Raises", "detail": "4 sets × 15 reps", "load": "Controlled", "rest": "45 sec" },
-        { "id": "knee-raises", "name": "Hanging Knee Raises", "detail": "3 sets × 12 reps", "load": "Bodyweight", "rest": "45 sec" }
+        { "id": "knee-raises", "name": "Hanging Knee Raises", "detail": "3 sets × 12 reps", "load": "Bodyweight", "rest": "45 sec" },
+        { "id": "bike-finish", "name": "Easy Bike Finish", "detail": "10–15 minutes", "load": "Easy effort", "rest": "—" },
+        { "id": "incline-treadmill", "name": "Incline Treadmill Walk", "detail": "10–15 minutes", "load": "Choose this or the bike", "rest": "—" }
       ]
     },
     "wednesday": {
@@ -72,7 +74,8 @@
         { "id": "cable-fly", "name": "Cable Fly", "detail": "3 sets × 12 reps", "load": "Controlled", "rest": "60 sec" },
         { "id": "laterals", "name": "Lateral Raises", "detail": "3 sets × 15 reps", "load": "Light + strict", "rest": "45 sec" },
         { "id": "curl", "name": "Biceps Curl", "detail": "3 sets × 12 reps", "load": "Controlled", "rest": "60 sec" },
-        { "id": "pushdown", "name": "Triceps Pushdown", "detail": "3 sets × 12 reps", "load": "Controlled", "rest": "60 sec" }
+        { "id": "pushdown", "name": "Triceps Pushdown", "detail": "3 sets × 12 reps", "load": "Controlled", "rest": "60 sec" },
+        { "id": "stairmaster", "name": "Optional StairMaster", "detail": "20 minutes", "load": "Only if legs feel fresh", "rest": "—" }
       ]
     },
     "friday": {
@@ -88,7 +91,8 @@
         { "id": "leg-press", "name": "Leg Press", "detail": "3 sets × 12 reps", "load": "Controlled", "rest": "75 sec" },
         { "id": "hip-thrust", "name": "Hip Thrust", "detail": "3 sets × 10 reps", "load": "Working weight", "rest": "75 sec" },
         { "id": "wood-chops", "name": "Cable Wood Chops", "detail": "3 sets × 15 reps", "load": "Each side", "rest": "45 sec" },
-        { "id": "side-plank", "name": "Side Plank", "detail": "3 sets × 30 sec", "load": "Each side", "rest": "45 sec" }
+        { "id": "side-plank", "name": "Side Plank", "detail": "3 sets × 30 sec", "load": "Each side", "rest": "45 sec" },
+        { "id": "bike-finish", "name": "Easy Bike Finish", "detail": "15–20 minutes", "load": "Easy effort", "rest": "—" }
       ]
     },
     "saturday": {

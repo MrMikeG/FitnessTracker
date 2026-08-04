@@ -19,5 +19,19 @@
   "split-squat": "/workouts/bulgarian-split-squat.png",
   "trap-deadlift": "/workouts/trap-bar-deadlift.png",
   "calf-raise": "/workouts/standing-calf-raise.png",
-  "leg-curl": "/workouts/leg-curl.png"
+  "leg-curl": "/workouts/leg-curl.png",
+  "easy-run": "/workouts/easy-run.png",
+  "speed-session": "/workouts/speed-interval-run.png",
+  "knee-raises": "/workouts/hanging-knee-raise.png",
+  "hip-thrust": "/workouts/hip-thrust.png",
+  "wood-chops": "/workouts/cable-wood-chop.png",
+  "side-plank": "/workouts/side-plank.png",
+  "bike-finish": "/workouts/stationary-bike.png",
+  "recovery-walk": "/workouts/walking-recovery.png",
+  "long-run": "/workouts/long-run.png",
+  "foam-roll": "/workouts/foam-rolling.png",
+  "stretch": "/workouts/stretching.png",
+  "post-run": "/workouts/stretching.png",
+  "stairmaster": "/workouts/stairmaster.png",
+  "incline-treadmill": "/workouts/incline-treadmill-walk.png"
 }
