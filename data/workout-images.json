@@ -1,7 +1,23 @@
 {
   "bench-press": "/workouts/bench-press.png",
+  "lat-pulldown": "/workouts/lat-pulldown.png",
   "cable-row": "/workouts/seated-cable-row.png",
-  "db-shoulder": "/workouts/shoulder-press.png",
+  "db-shoulder": "/workouts/dumbbell-shoulder-press.png",
   "incline-db": "/workouts/incline-dumbbell-press.png",
-  "incline-bench": "/workouts/incline-bench-press.png"
+  "incline-bench": "/workouts/incline-bench-press.png",
+  "pullups": "/workouts/pull-ups.png",
+  "db-row": "/workouts/one-arm-dumbbell-row.png",
+  "cable-fly": "/workouts/cable-fly.png",
+  "laterals": "/workouts/dumbbell-lateral-raise.png",
+  "curl": "/workouts/dumbbell-bicep-curl.png",
+  "squat": "/workouts/barbell-squat.png",
+  "rdl": "/workouts/romanian-deadlift.png",
+  "lunges": "/workouts/walking-lunges.png",
+  "plank": "/workouts/plank.png",
+  "pushdown": "/workouts/triceps-pushdown.png",
+  "leg-press": "/workouts/leg-press.png",
+  "split-squat": "/workouts/bulgarian-split-squat.png",
+  "trap-deadlift": "/workouts/trap-bar-deadlift.png",
+  "calf-raise": "/workouts/standing-calf-raise.png",
+  "leg-curl": "/workouts/leg-curl.png"
 }
