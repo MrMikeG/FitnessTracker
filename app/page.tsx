@@ -15,6 +15,7 @@ const workoutImages = imageMap as Record<string, string>
 
 type SavedProgress = {
   completedByDay: Record<string, string[]>
+  setProgressByDay: Record<string, Record<string, number>>
   completedWorkouts: string[]
   skippedDays: string[]
   selectedDayIndex: number
@@ -35,6 +36,7 @@ export default function Home() {
   const phase = selectedWeek <= 4 ? 'Foundation phase' : selectedWeek <= 8 ? 'Build the aerobic base' : 'Endurance phase'
   const exercises = workout.exercises.map(exercise => exercise.id === 'easy-run' ? { ...exercise, detail: `${plan.weekSettings.easyRun[weekIndex]} · easy conversational pace` } : exercise.id === 'speed-session' ? { ...exercise, detail: plan.weekSettings.speedRun[weekIndex] } : exercise.id === 'long-run' ? { ...exercise, detail: `${plan.weekSettings.longRunMiles[weekIndex]} miles · easy conversational pace` } : exercise)
   const [completedByDay, setCompletedByDay] = useState<Record<string, string[]>>({})
+  const [setProgressByDay, setSetProgressByDay] = useState<Record<string, Record<string, number>>>({})
   const [completedWorkouts, setCompletedWorkouts] = useState<string[]>([])
   const [skippedDays, setSkippedDays] = useState<string[]>([])
   const [dark, setDark] = useState(true)
@@ -69,6 +71,7 @@ export default function Home() {
       if (saved) {
         const progress = JSON.parse(saved) as Partial<SavedProgress>
         if (progress.completedByDay) setCompletedByDay(progress.completedByDay)
+        if (progress.setProgressByDay) setSetProgressByDay(progress.setProgressByDay)
         if (progress.completedWorkouts) setCompletedWorkouts(progress.completedWorkouts)
         if (progress.skippedDays) setSkippedDays(progress.skippedDays)
         if (typeof progress.selectedDayIndex === 'number') setSelectedDayIndex(progress.selectedDayIndex)
@@ -79,15 +82,25 @@ export default function Home() {
   }, [])
   useEffect(() => {
     if (!hydrated) return
-    const progress: SavedProgress = { completedByDay, completedWorkouts, skippedDays, selectedDayIndex, selectedWeek, dark }
+    const progress: SavedProgress = { completedByDay, setProgressByDay, completedWorkouts, skippedDays, selectedDayIndex, selectedWeek, dark }
     window.localStorage.setItem(storageKey, JSON.stringify(progress))
-  }, [completedByDay, completedWorkouts, dark, hydrated, selectedDayIndex, selectedWeek, skippedDays])
+  }, [completedByDay, completedWorkouts, dark, hydrated, selectedDayIndex, selectedWeek, setProgressByDay, skippedDays])
 
   const percent = Math.round((completed.length / exercises.length) * 100)
-  const toggle = (id: string) => setCompletedByDay(days => {
-    const current = days[workoutKey] ?? []
-    return { ...days, [workoutKey]: current.includes(id) ? current.filter(x => x !== id) : [...current, id] }
-  })
+  const getSetTarget = (exercise: Exercise) => Number(exercise.detail.match(/(\d+)\s*sets?/)?.[1] ?? 1)
+  const advanceExercise = (exercise: Exercise) => {
+    const target = getSetTarget(exercise)
+    const current = setProgressByDay[workoutKey]?.[exercise.id] ?? (completed.includes(exercise.id) ? target : 0)
+    const next = current >= target ? 0 : current + 1
+    setSetProgressByDay(days => ({ ...days, [workoutKey]: { ...days[workoutKey], [exercise.id]: next } }))
+    setCompletedByDay(days => {
+      const currentCompleted = days[workoutKey] ?? []
+      const nextCompleted = next === target
+        ? currentCompleted.includes(exercise.id) ? currentCompleted : [...currentCompleted, exercise.id]
+        : currentCompleted.filter(id => id !== exercise.id)
+      return { ...days, [workoutKey]: nextCompleted }
+    })
+  }
   const changeDay = (direction: number) => setSelectedDayIndex(index => (index + direction + 7) % 7)
   const toggleSkip = () => {
     setSkippedDays(days => days.includes(workoutKey) ? days.filter(day => day !== workoutKey) : [...days, workoutKey])
@@ -103,6 +116,14 @@ export default function Home() {
   }
   const changeWeek = (direction: number) => setSelectedWeek(week => Math.min(plan.totalWeeks, Math.max(1, week + direction)))
   const chooseRestPreset = (seconds: number) => { setRestPreset(seconds); setRestRemaining(seconds); setRestRunning(false) }
+  const toggleRestTimer = () => {
+    if (restRunning) {
+      setRestRunning(false)
+      return
+    }
+    if (restRemaining === 0) setRestRemaining(restPreset)
+    setRestRunning(true)
+  }
   const restTime = `${String(Math.floor(restRemaining / 60)).padStart(2, '0')}:${String(restRemaining % 60).padStart(2, '0')}`
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 pb-28 pt-5 sm:px-7 sm:pt-8">
@@ -132,7 +153,7 @@ export default function Home() {
         <div className="glass rounded-4xl p-5 sm:p-7">
           <div className="flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Your workout</p><h2 className="mt-1 text-2xl font-bold">{selectedDayIndex === actualDayIndex ? 'Today’s' : `${workout.day}'s`} exercises</h2></div><span className="text-sm font-semibold text-zinc-500">{isSkipped ? 'Skipped' : isWorkoutComplete ? 'Complete' : `${completed.length}/${exercises.length} done`}</span></div>
           <div className="mt-5 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/10"><div className="h-full rounded-full bg-lime transition-all duration-500" style={{width: `${percent}%`}}/></div>
-          <div className={`mt-5 space-y-2 ${isSkipped ? 'opacity-40' : ''}`}>{exercises.map((ex, i) => <ExerciseRow key={`${ex.id}-${i}`} exercise={ex} number={i + 1} checked={completed.includes(ex.id)} onToggle={() => toggle(ex.id)} onPreview={() => setPreview({ name: ex.name, image: workoutImages[ex.id] })} />)}</div>
+          <div className={`mt-5 space-y-2 ${isSkipped ? 'opacity-40' : ''}`}>{exercises.map((ex, i) => { const target = getSetTarget(ex); const progress = setProgressByDay[workoutKey]?.[ex.id] ?? (completed.includes(ex.id) ? target : 0); return <ExerciseRow key={`${ex.id}-${i}`} exercise={ex} number={i + 1} checked={progress === target} progress={progress} target={target} onAdvance={() => advanceExercise(ex)} onPreview={() => setPreview({ name: ex.name, image: workoutImages[ex.id] })} /> })}</div>
           <button onClick={toggleSkip} className={`mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-semibold transition ${isSkipped ? 'border-coral bg-coral text-white' : 'border-zinc-200 text-zinc-500 hover:border-coral hover:text-coral dark:border-white/10'}`}><SkipForward size={16}/>{isSkipped ? 'Undo skip' : 'Skip workout'}</button>
         </div>
 
@@ -141,7 +162,7 @@ export default function Home() {
       <section className="glass mb-5 rounded-3xl p-5 sm:p-6">
         <div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Rest timer</p><h2 className="mt-1 text-xl font-bold">Recovery between sets</h2></div><Timer size={21} className="text-coral"/></div>
         <div className="mt-5 flex items-center gap-5"><div className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-ink text-2xl font-bold tabular-nums text-lime dark:bg-white dark:text-ink">{restTime}</div><div className="grid flex-1 grid-cols-3 gap-2">{[60, 120, 180].map(seconds => <button key={seconds} onClick={() => chooseRestPreset(seconds)} className={`rounded-xl py-2 text-sm font-bold transition ${restPreset === seconds ? 'bg-lime text-ink' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-white/5 dark:text-zinc-300 dark:hover:bg-white/10'}`}>{seconds / 60} min</button>)}</div></div>
-        <div className="mt-5 grid grid-cols-[1fr_auto] gap-2"><button onClick={() => setRestRunning(running => !running)} className="flex items-center justify-center gap-2 rounded-2xl bg-ink py-3 text-sm font-bold text-white transition hover:scale-[1.01] dark:bg-white dark:text-ink">{restRunning ? <><Pause size={17} fill="currentColor"/> Pause</> : <><Play size={17} fill="currentColor"/> {restRemaining === 0 ? 'Restart timer' : 'Start rest'}</>}</button><button onClick={() => { setRestRemaining(restPreset); setRestRunning(false) }} className="grid w-12 place-items-center rounded-2xl border border-zinc-200 text-zinc-500 transition hover:text-ink dark:border-white/10 dark:hover:text-white" aria-label="Reset rest timer"><RotateCcw size={18}/></button></div>
+        <div className="mt-5 grid grid-cols-[1fr_auto] gap-2"><button onClick={toggleRestTimer} className="flex items-center justify-center gap-2 rounded-2xl bg-ink py-3 text-sm font-bold text-white transition hover:scale-[1.01] dark:bg-white dark:text-ink">{restRunning ? <><Pause size={17} fill="currentColor"/> Pause</> : <><Play size={17} fill="currentColor"/> {restRemaining === 0 ? 'Restart timer' : 'Start rest'}</>}</button><button onClick={() => { setRestRemaining(restPreset); setRestRunning(false) }} className="grid w-12 place-items-center rounded-2xl border border-zinc-200 text-zinc-500 transition hover:text-ink dark:border-white/10 dark:hover:text-white" aria-label="Reset rest timer"><RotateCcw size={18}/></button></div>
       </section>
 
       <section className="glass rounded-3xl px-5 py-4"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">This week</p><p className="mt-1 font-bold">Week {selectedWeek} of {plan.totalWeeks}</p></div><div className="flex items-center gap-1"><button onClick={() => changeWeek(-1)} disabled={selectedWeek === 1} className="grid h-9 w-9 place-items-center rounded-xl text-zinc-400 transition hover:bg-white/10 hover:text-white disabled:opacity-25" aria-label="Previous week"><ChevronLeft size={19}/></button><button onClick={() => changeWeek(1)} disabled={selectedWeek === plan.totalWeeks} className="grid h-9 w-9 place-items-center rounded-xl text-zinc-400 transition hover:bg-white/10 hover:text-white disabled:opacity-25" aria-label="Next week"><ChevronRight size={19}/></button></div></div><div className="mt-5 flex justify-between">{dayLabels.map((d, i) => { const key = `${selectedWeek}-${weekDayKeys[i]}`; const done = completedWorkouts.includes(key); return <button onClick={() => setSelectedDayIndex(i)} key={`${d}-${i}`} className="flex flex-col items-center gap-2"><span className="text-[11px] font-semibold muted">{dayNames[i]}</span><span className={`grid h-9 w-9 place-items-center rounded-full text-xs font-bold transition ${done ? 'bg-lime text-ink' : i === selectedDayIndex ? 'bg-ink text-white ring-2 ring-lime/60 dark:bg-white dark:text-ink' : 'bg-zinc-100 text-zinc-400 dark:bg-white/5'}`}>{done ? <Check size={15}/> : d}</span></button>})}</div></section>
@@ -154,6 +175,6 @@ export default function Home() {
   )
 }
 
-function ExerciseRow({ exercise, number, checked, onToggle, onPreview }: { exercise: Exercise; number: number; checked: boolean; onToggle: () => void; onPreview: () => void }) {
-  return <div className={`flex w-full items-center gap-2 rounded-2xl border p-3 transition sm:gap-3 sm:p-4 ${checked ? 'border-lime/50 bg-lime/10' : 'border-transparent bg-zinc-50 hover:border-zinc-200 dark:bg-white/[.035] dark:hover:border-white/15'}`}><button onClick={onToggle} className="flex min-w-0 flex-1 items-center gap-3 text-left sm:gap-4"><span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${checked ? 'border-lime bg-lime text-ink' : 'border-zinc-300 dark:border-zinc-600'}`}>{checked ? <Check size={14} strokeWidth={3}/> : <span className="text-[10px] font-bold text-zinc-400">{number}</span>}</span><span className="min-w-0 flex-1"><span className={`block text-sm font-bold ${checked ? 'line-through opacity-50' : ''}`}>{exercise.name}</span><span className="mt-0.5 block text-xs muted">{exercise.detail} <span className="mx-1">·</span> {exercise.load}</span></span></button><button onClick={onPreview} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-zinc-500 shadow-sm transition hover:text-ink dark:bg-white/5 dark:hover:text-white" aria-label={`View image for ${exercise.name}`}><ImageIcon size={17}/></button><span className="hidden rounded-lg bg-white px-2 py-1 text-[11px] font-semibold muted shadow-sm dark:bg-white/5 md:block">{exercise.rest}</span></div>
+function ExerciseRow({ exercise, number, checked, progress, target, onAdvance, onPreview }: { exercise: Exercise; number: number; checked: boolean; progress: number; target: number; onAdvance: () => void; onPreview: () => void }) {
+  return <div className={`flex w-full items-center gap-2 rounded-2xl border p-3 transition sm:gap-3 sm:p-4 ${checked ? 'border-lime/50 bg-lime/10' : 'border-transparent bg-zinc-50 hover:border-zinc-200 dark:bg-white/[.035] dark:hover:border-white/15'}`}><button onClick={onAdvance} className="flex min-w-0 flex-1 items-center gap-3 text-left sm:gap-4" aria-label={`${exercise.name}: ${checked ? 'reset progress' : 'complete next set'}`}><span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${checked ? 'border-lime bg-lime text-ink' : 'border-zinc-300 dark:border-zinc-600'}`}>{checked ? <Check size={14} strokeWidth={3}/> : <span className="text-[10px] font-bold text-zinc-400">{number}</span>}</span><span className="min-w-0 flex-1"><span className={`block text-sm font-bold ${checked ? 'line-through opacity-50' : ''}`}>{exercise.name}</span><span className="mt-0.5 block text-xs muted">{exercise.detail} <span className="mx-1">·</span> {exercise.load}</span><span className="mt-2 flex items-center gap-2"><span className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10"><span className="block h-full rounded-full bg-lime transition-all duration-300" style={{ width: `${(progress / target) * 100}%` }}/></span><span className="shrink-0 text-[11px] font-bold muted">{progress}/{target} {target === 1 ? 'set' : 'sets'}</span></span></span></button><button onClick={onPreview} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-zinc-500 shadow-sm transition hover:text-ink dark:bg-white/5 dark:hover:text-white" aria-label={`View image for ${exercise.name}`}><ImageIcon size={17}/></button><span className="hidden rounded-lg bg-white px-2 py-1 text-[11px] font-semibold muted shadow-sm dark:bg-white/5 md:block">{exercise.rest}</span></div>
 }

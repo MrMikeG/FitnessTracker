@@ -33,5 +33,7 @@
   "stretch": "/workouts/stretching.png",
   "post-run": "/workouts/stretching.png",
   "stairmaster": "/workouts/stairmaster.png",
-  "incline-treadmill": "/workouts/incline-treadmill-walk.png"
+  "incline-treadmill": "/workouts/incline-treadmill-walk.png",
+  "dynamic": "/workouts/dynamic-stretches.png",
+  "walk-warmup": "/workouts/walk-warm-up.png"
 }
