@@ -133,7 +133,7 @@ export default function Home() {
       </header>
 
       <section className="mb-5 grid gap-5 lg:grid-cols-[1.45fr_.9fr]">
-        <div className="relative overflow-hidden rounded-4xl bg-ink px-6 py-7 text-white shadow-soft sm:px-8 sm:py-8">
+        <div className="relative isolate overflow-hidden rounded-4xl bg-ink px-6 py-7 text-white shadow-soft [clip-path:inset(0_round_2rem)] sm:px-8 sm:py-8">
           <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-lime/15 blur-3xl"/>
           <div className="relative flex items-center justify-between gap-3"><p className="text-sm font-semibold text-lime">{selectedDayIndex === actualDayIndex ? 'TODAY' : 'PLAN DAY'} · {workout.day.toUpperCase()}</p><div className="flex gap-1"><button onClick={() => changeDay(-1)} className="grid h-8 w-8 place-items-center rounded-xl bg-white/10 hover:bg-white/20" aria-label="Previous workout"><ChevronLeft size={17}/></button><button onClick={() => changeDay(1)} className="grid h-8 w-8 place-items-center rounded-xl bg-white/10 hover:bg-white/20" aria-label="Next workout"><ChevronRight size={17}/></button></div></div>
           <h2 className="relative mt-2 text-4xl font-bold tracking-tight sm:text-5xl">{workout.focus}</h2>
