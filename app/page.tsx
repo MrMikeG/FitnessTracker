@@ -12,10 +12,17 @@ const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const weekDayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
 const storageKey = 'pulse-training-progress-v2'
 const workoutImages = imageMap as Record<string, string>
+const weightedExerciseIds = new Set([
+  'bench-press', 'lat-pulldown', 'db-shoulder', 'cable-row', 'incline-db',
+  'squat', 'rdl', 'lunges', 'leg-curl', 'calf-raise',
+  'incline-bench', 'pullups', 'db-row', 'cable-fly', 'laterals', 'curl', 'pushdown',
+  'trap-deadlift', 'split-squat', 'leg-press', 'hip-thrust', 'wood-chops'
+])
 
 type SavedProgress = {
   completedByDay: Record<string, string[]>
   setProgressByDay: Record<string, Record<string, number>>
+  weightByExercise: Record<string, string>
   completedWorkouts: string[]
   skippedDays: string[]
   selectedDayIndex: number
@@ -37,6 +44,7 @@ export default function Home() {
   const exercises = workout.exercises.map(exercise => exercise.id === 'easy-run' ? { ...exercise, detail: `${plan.weekSettings.easyRun[weekIndex]} · easy conversational pace` } : exercise.id === 'speed-session' ? { ...exercise, detail: plan.weekSettings.speedRun[weekIndex] } : exercise.id === 'long-run' ? { ...exercise, detail: `${plan.weekSettings.longRunMiles[weekIndex]} miles · easy conversational pace` } : exercise)
   const [completedByDay, setCompletedByDay] = useState<Record<string, string[]>>({})
   const [setProgressByDay, setSetProgressByDay] = useState<Record<string, Record<string, number>>>({})
+  const [weightByExercise, setWeightByExercise] = useState<Record<string, string>>({})
   const [completedWorkouts, setCompletedWorkouts] = useState<string[]>([])
   const [skippedDays, setSkippedDays] = useState<string[]>([])
   const [dark, setDark] = useState(true)
@@ -72,6 +80,7 @@ export default function Home() {
         const progress = JSON.parse(saved) as Partial<SavedProgress>
         if (progress.completedByDay) setCompletedByDay(progress.completedByDay)
         if (progress.setProgressByDay) setSetProgressByDay(progress.setProgressByDay)
+        if (progress.weightByExercise) setWeightByExercise(progress.weightByExercise)
         if (progress.completedWorkouts) setCompletedWorkouts(progress.completedWorkouts)
         if (progress.skippedDays) setSkippedDays(progress.skippedDays)
         if (typeof progress.selectedDayIndex === 'number') setSelectedDayIndex(progress.selectedDayIndex)
@@ -82,12 +91,14 @@ export default function Home() {
   }, [])
   useEffect(() => {
     if (!hydrated) return
-    const progress: SavedProgress = { completedByDay, setProgressByDay, completedWorkouts, skippedDays, selectedDayIndex, selectedWeek, dark }
+    const progress: SavedProgress = { completedByDay, setProgressByDay, weightByExercise, completedWorkouts, skippedDays, selectedDayIndex, selectedWeek, dark }
     window.localStorage.setItem(storageKey, JSON.stringify(progress))
-  }, [completedByDay, completedWorkouts, dark, hydrated, selectedDayIndex, selectedWeek, setProgressByDay, skippedDays])
+  }, [completedByDay, completedWorkouts, dark, hydrated, selectedDayIndex, selectedWeek, setProgressByDay, skippedDays, weightByExercise])
 
   const percent = Math.round((completed.length / exercises.length) * 100)
   const getSetTarget = (exercise: Exercise) => Number(exercise.detail.match(/(\d+)\s*sets?/)?.[1] ?? 1)
+  const getWeightKey = (exercise: Exercise) => exercise.name.trim().toLowerCase()
+  const updateWeight = (exercise: Exercise, value: string) => setWeightByExercise(weights => ({ ...weights, [getWeightKey(exercise)]: value }))
   const advanceExercise = (exercise: Exercise) => {
     const target = getSetTarget(exercise)
     const current = setProgressByDay[workoutKey]?.[exercise.id] ?? (completed.includes(exercise.id) ? target : 0)
@@ -153,7 +164,7 @@ export default function Home() {
         <div className="glass rounded-4xl p-5 sm:p-7">
           <div className="flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] muted">Your workout</p><h2 className="mt-1 text-2xl font-bold">{selectedDayIndex === actualDayIndex ? 'Today’s' : `${workout.day}'s`} exercises</h2></div><span className="text-sm font-semibold text-zinc-500">{isSkipped ? 'Skipped' : isWorkoutComplete ? 'Complete' : `${completed.length}/${exercises.length} done`}</span></div>
           <div className="mt-5 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/10"><div className="h-full rounded-full bg-lime transition-all duration-500" style={{width: `${percent}%`}}/></div>
-          <div className={`mt-5 space-y-2 ${isSkipped ? 'opacity-40' : ''}`}>{exercises.map((ex, i) => { const target = getSetTarget(ex); const progress = setProgressByDay[workoutKey]?.[ex.id] ?? (completed.includes(ex.id) ? target : 0); return <ExerciseRow key={`${ex.id}-${i}`} exercise={ex} number={i + 1} checked={progress === target} progress={progress} target={target} onAdvance={() => advanceExercise(ex)} onPreview={() => setPreview({ name: ex.name, image: workoutImages[ex.id] })} /> })}</div>
+          <div className={`mt-5 space-y-2 ${isSkipped ? 'opacity-40' : ''}`}>{exercises.map((ex, i) => { const target = getSetTarget(ex); const progress = setProgressByDay[workoutKey]?.[ex.id] ?? (completed.includes(ex.id) ? target : 0); return <ExerciseRow key={`${ex.id}-${i}`} exercise={ex} number={i + 1} checked={progress === target} progress={progress} target={target} weight={weightByExercise[getWeightKey(ex)] ?? ''} trackWeight={weightedExerciseIds.has(ex.id)} onWeightChange={value => updateWeight(ex, value)} onAdvance={() => advanceExercise(ex)} onPreview={() => setPreview({ name: ex.name, image: workoutImages[ex.id] })} /> })}</div>
           <button onClick={toggleSkip} className={`mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-semibold transition ${isSkipped ? 'border-coral bg-coral text-white' : 'border-zinc-200 text-zinc-500 hover:border-coral hover:text-coral dark:border-white/10'}`}><SkipForward size={16}/>{isSkipped ? 'Undo skip' : 'Skip workout'}</button>
         </div>
 
@@ -175,6 +186,6 @@ export default function Home() {
   )
 }
 
-function ExerciseRow({ exercise, number, checked, progress, target, onAdvance, onPreview }: { exercise: Exercise; number: number; checked: boolean; progress: number; target: number; onAdvance: () => void; onPreview: () => void }) {
-  return <div className={`flex w-full items-center gap-2 rounded-2xl border p-3 transition sm:gap-3 sm:p-4 ${checked ? 'border-lime/50 bg-lime/10' : 'border-transparent bg-zinc-50 hover:border-zinc-200 dark:bg-white/[.035] dark:hover:border-white/15'}`}><button onClick={onAdvance} className="flex min-w-0 flex-1 items-center gap-3 text-left sm:gap-4" aria-label={`${exercise.name}: ${checked ? 'reset progress' : 'complete next set'}`}><span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${checked ? 'border-lime bg-lime text-ink' : 'border-zinc-300 dark:border-zinc-600'}`}>{checked ? <Check size={14} strokeWidth={3}/> : <span className="text-[10px] font-bold text-zinc-400">{number}</span>}</span><span className="min-w-0 flex-1"><span className={`block text-sm font-bold ${checked ? 'line-through opacity-50' : ''}`}>{exercise.name}</span><span className="mt-0.5 block text-xs muted">{exercise.detail} <span className="mx-1">·</span> {exercise.load}</span><span className="mt-2 flex items-center gap-2"><span className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10"><span className="block h-full rounded-full bg-lime transition-all duration-300" style={{ width: `${(progress / target) * 100}%` }}/></span><span className="shrink-0 text-[11px] font-bold muted">{progress}/{target} {target === 1 ? 'set' : 'sets'}</span></span></span></button><button onClick={onPreview} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-zinc-500 shadow-sm transition hover:text-ink dark:bg-white/5 dark:hover:text-white" aria-label={`View image for ${exercise.name}`}><ImageIcon size={17}/></button><span className="hidden rounded-lg bg-white px-2 py-1 text-[11px] font-semibold muted shadow-sm dark:bg-white/5 md:block">{exercise.rest}</span></div>
+function ExerciseRow({ exercise, number, checked, progress, target, weight, trackWeight, onWeightChange, onAdvance, onPreview }: { exercise: Exercise; number: number; checked: boolean; progress: number; target: number; weight: string; trackWeight: boolean; onWeightChange: (value: string) => void; onAdvance: () => void; onPreview: () => void }) {
+  return <div className={`flex w-full items-center gap-2 rounded-2xl border p-3 transition sm:gap-3 sm:p-4 ${checked ? 'border-lime/50 bg-lime/10' : 'border-transparent bg-zinc-50 hover:border-zinc-200 dark:bg-white/[.035] dark:hover:border-white/15'}`}><button onClick={onAdvance} className="flex min-w-0 flex-1 items-center gap-3 text-left sm:gap-4" aria-label={`${exercise.name}: ${checked ? 'reset progress' : 'complete next set'}`}><span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${checked ? 'border-lime bg-lime text-ink' : 'border-zinc-300 dark:border-zinc-600'}`}>{checked ? <Check size={14} strokeWidth={3}/> : <span className="text-[10px] font-bold text-zinc-400">{number}</span>}</span><span className="min-w-0 flex-1"><span className={`block text-sm font-bold ${checked ? 'line-through opacity-50' : ''}`}>{exercise.name}</span><span className="mt-0.5 block text-xs muted">{exercise.detail} <span className="mx-1">·</span> {exercise.load}</span><span className="mt-2 flex items-center gap-2"><span className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10"><span className="block h-full rounded-full bg-lime transition-all duration-300" style={{ width: `${(progress / target) * 100}%` }}/></span><span className="shrink-0 text-[11px] font-bold muted">{progress}/{target} {target === 1 ? 'set' : 'sets'}</span></span></span></button>{trackWeight && <label className="w-14 shrink-0 text-center"><span className="block text-[9px] font-bold uppercase tracking-[.12em] muted">lb</span><input type="number" min="0" step="2.5" inputMode="decimal" value={weight} onChange={event => onWeightChange(event.target.value)} placeholder="—" className="mt-1 h-9 w-full rounded-xl border border-zinc-200 bg-white px-1 text-center text-sm font-bold text-ink outline-none transition focus:border-lime focus:ring-2 focus:ring-lime/30 dark:border-white/10 dark:bg-white/10 dark:text-white" aria-label={`Weight used for ${exercise.name} in pounds`}/></label>}<button onClick={onPreview} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-zinc-500 shadow-sm transition hover:text-ink dark:bg-white/5 dark:hover:text-white" aria-label={`View image for ${exercise.name}`}><ImageIcon size={17}/></button><span className="hidden rounded-lg bg-white px-2 py-1 text-[11px] font-semibold muted shadow-sm dark:bg-white/5 md:block">{exercise.rest}</span></div>
 }
